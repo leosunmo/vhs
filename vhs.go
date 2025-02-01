@@ -38,28 +38,34 @@ type VHS struct {
 
 // Options is the set of options for the setup.
 type Options struct {
-	Shell         Shell
-	FontFamily    string
-	FontSize      int
-	LetterSpacing float64
-	LineHeight    float64
-	TypingSpeed   time.Duration
-	Theme         Theme
-	Test          TestOptions
-	Video         VideoOptions
-	LoopOffset    float64
-	WaitTimeout   time.Duration
-	WaitPattern   *regexp.Regexp
-	CursorBlink   bool
-	Screenshot    ScreenshotOptions
-	Style         StyleOptions
-	SVG           SVGOptions
-	DebugConsole  bool // Enable browser console logging
+	Shell               Shell
+	FontFamily          string
+	FontSize            int
+	LetterSpacing       float64
+	LineHeight          float64
+	TypingSpeed         time.Duration
+	TypingSpeedVariable TypingSpeedVariableOptions
+	Theme               Theme
+	Test                TestOptions
+	Video               VideoOptions
+	LoopOffset          float64
+	WaitTimeout         time.Duration
+	WaitPattern         *regexp.Regexp
+	CursorBlink         bool
+	Screenshot          ScreenshotOptions
+	Style               StyleOptions
+	SVG                 SVGOptions
+	DebugConsole        bool // Enable browser console logging
 }
 
 // SVGOptions contains SVG-specific configuration options.
 type SVGOptions struct {
 	OptimizeSize bool
+}
+
+type TypingSpeedVariableOptions struct {
+	MinTypingSpeed time.Duration
+	MaxTypingSpeed time.Duration
 }
 
 const (
@@ -115,14 +121,18 @@ func DefaultVHSOptions() Options {
 		LetterSpacing: defaultLetterSpacing,
 		LineHeight:    defaultLineHeight,
 		TypingSpeed:   defaultTypingSpeed,
-		Shell:         Shells[defaultShell],
-		Theme:         DefaultTheme,
-		CursorBlink:   defaultCursorBlink,
-		Video:         video,
-		Screenshot:    screenshot,
-		WaitTimeout:   defaultWaitTimeout,
-		WaitPattern:   defaultWaitPattern,
-		SVG:           DefaultSVGOptions(),
+		TypingSpeedVariable: TypingSpeedVariableOptions{
+			MinTypingSpeed: defaultTypingSpeed,
+			MaxTypingSpeed: defaultTypingSpeed,
+		},
+		Shell:       Shells[defaultShell],
+		Theme:       DefaultTheme,
+		CursorBlink: defaultCursorBlink,
+		Video:       video,
+		Screenshot:  screenshot,
+		WaitTimeout: defaultWaitTimeout,
+		WaitPattern: defaultWaitPattern,
+		SVG:         DefaultSVGOptions(),
 	}
 }
 

@@ -51,6 +51,7 @@ var CommandTypes = []CommandType{
 	token.SHOW,
 	token.TAB,
 	token.TYPE,
+	token.TYPE_VARIABLE,
 	token.UP,
 	token.WAIT,
 	token.SOURCE,
@@ -161,6 +162,8 @@ func (p *Parser) parseCommand() []Command {
 		return []Command{p.parseSleep()}
 	case token.TYPE:
 		return []Command{p.parseType()}
+	case token.TYPE_VARIABLE:
+		return []Command{p.parseTypeVariable()}
 	case token.CTRL:
 		return []Command{p.parseCtrl()}
 	case token.ALT:
@@ -482,6 +485,29 @@ func (p *Parser) parseSet() Command {
 		} else if cmd.Options == "TypingSpeed" {
 			cmd.Args += "s"
 		}
+	case token.TYPING_SPEED_VARIABLE:
+		firstArg := p.peek.Literal
+		p.nextToken()
+		if p.peek.Type == token.MILLISECONDS || p.peek.Type == token.SECONDS {
+			firstArg += p.peek.Literal
+			p.nextToken()
+		} else {
+			firstArg += "s"
+		}
+
+		var secondArg string
+		if p.peek.Type == token.NUMBER {
+			secondArg = p.peek.Literal
+			p.nextToken()
+			if p.peek.Type == token.MILLISECONDS || p.peek.Type == token.SECONDS {
+				secondArg += p.peek.Literal
+				p.nextToken()
+			} else {
+				secondArg += "s"
+			}
+		}
+
+		cmd.Args = firstArg + " " + secondArg
 	case token.WINDOW_BAR:
 		cmd.Args = p.peek.Literal
 		p.nextToken()
@@ -580,6 +606,39 @@ func (p *Parser) parseShow() Command {
 //	Type "string"
 func (p *Parser) parseType() Command {
 	cmd := Command{Type: token.TYPE}
+
+	cmd.Options = p.parseSpeed()
+
+	if p.peek.Type != token.STRING {
+		p.errors = append(p.errors, NewError(p.peek, p.cur.Literal+" expects string"))
+	}
+
+	for p.peek.Type == token.STRING {
+		p.nextToken()
+		cmd.Args += p.cur.Literal
+
+		// If the next token is a string, add a space between them.
+		// Since tokens must be separated by a whitespace, this is most likely
+		// what the user intended.
+		//
+		// Although it is possible that there may be multiple spaces / tabs between
+		// the tokens, however if the user was intending to type multiple spaces
+		// they would need to use a string literal.
+
+		if p.peek.Type == token.STRING {
+			cmd.Args += " "
+		}
+	}
+
+	return cmd
+}
+
+// parseTypeVariable parses a type variable command.
+// A type variable command takes a string to type.
+//
+// TypeVariable "string"
+func (p *Parser) parseTypeVariable() Command {
+	cmd := Command{Type: token.TYPE_VARIABLE}
 
 	cmd.Options = p.parseSpeed()
 
