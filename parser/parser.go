@@ -259,7 +259,7 @@ func (p *Parser) parseRepeat() string {
 
 // parseTime parses a time argument.
 //
-// <number>[ms]
+//	<number>[ms]
 func (p *Parser) parseTime() string {
 	var t string
 
@@ -285,10 +285,10 @@ func (p *Parser) parseTime() string {
 // parseCtrl parses a control command.
 // A control command takes one or multiples characters and/or modifiers to type while ctrl is held down.
 //
-// Ctrl[+Alt][+Shift]+<char>
-// E.g:
-// Ctrl+Shift+O
-// Ctrl+Alt+Shift+P
+//	Ctrl[+Alt][+Shift]+<char>
+//	E.g:
+//	Ctrl+Shift+O
+//	Ctrl+Alt+Shift+P
 func (p *Parser) parseCtrl() Command {
 	var args []string
 
@@ -347,7 +347,7 @@ func (p *Parser) parseCtrl() Command {
 // parseAlt parses an alt command.
 // An alt command takes a character to type while the modifier is held down.
 //
-// Alt+<character>
+//	Alt+<character>
 func (p *Parser) parseAlt() Command {
 	if p.peek.Type == token.PLUS {
 		p.nextToken()
@@ -369,11 +369,11 @@ func (p *Parser) parseAlt() Command {
 // parseShift parses a shift command.
 // A shift command takes one character and types while shift is held down.
 //
-// Shift+<char>
-// E.g.
-// Shift+A
-// Shift+Tab
-// Shift+Enter
+//	Shift+<char>
+//	E.g.
+//	Shift+A
+//	Shift+Tab
+//	Shift+Enter
 func (p *Parser) parseShift() Command {
 	if p.peek.Type == token.PLUS {
 		p.nextToken()
@@ -395,7 +395,7 @@ func (p *Parser) parseShift() Command {
 // parseKeypress parses a repeatable and time adjustable keypress command.
 // A keypress command takes an optional typing speed and optional count.
 //
-// Key[@<time>] [count]
+//	Key[@<time>] [count]
 func (p *Parser) parseKeypress(ct token.Type) Command {
 	cmd := Command{Type: CommandType(ct)}
 	cmd.Options = p.parseSpeed()
@@ -406,7 +406,7 @@ func (p *Parser) parseKeypress(ct token.Type) Command {
 // parseOutput parses an output command.
 // An output command takes a file path to which to output.
 //
-// Output <path>
+//	Output <path>
 func (p *Parser) parseOutput() Command {
 	cmd := Command{Type: token.OUTPUT}
 
@@ -433,7 +433,7 @@ func (p *Parser) parseOutput() Command {
 // parseSet parses a set command.
 // A set command takes a setting name and a value.
 //
-// Set <setting> <value>
+//	Set <setting> <value>
 func (p *Parser) parseSet() Command {
 	cmd := Command{Type: token.SET}
 
@@ -551,7 +551,7 @@ func (p *Parser) parseSet() Command {
 // parseSleep parses a sleep command.
 // A sleep command takes a time for how long to sleep.
 //
-// Sleep <time>
+//	Sleep <time>
 func (p *Parser) parseSleep() Command {
 	cmd := Command{Type: token.SLEEP}
 	cmd.Args = p.parseTime()
@@ -560,8 +560,7 @@ func (p *Parser) parseSleep() Command {
 
 // parseHide parses a Hide command.
 //
-// Hide
-// ...
+//	Hide
 func (p *Parser) parseHide() Command {
 	cmd := Command{Type: token.HIDE}
 	return cmd
@@ -569,8 +568,7 @@ func (p *Parser) parseHide() Command {
 
 // parseRequire parses a Require command.
 //
-// ...
-// Require
+//	Require
 func (p *Parser) parseRequire() Command {
 	cmd := Command{Type: token.REQUIRE}
 
@@ -586,8 +584,7 @@ func (p *Parser) parseRequire() Command {
 
 // parseShow parses a Show command.
 //
-// ...
-// Show
+//	Show
 func (p *Parser) parseShow() Command {
 	cmd := Command{Type: token.SHOW}
 	return cmd
@@ -596,7 +593,7 @@ func (p *Parser) parseShow() Command {
 // parseType parses a type command.
 // A type command takes a string to type.
 //
-// Type "string"
+//	Type "string"
 func (p *Parser) parseType() Command {
 	cmd := Command{Type: token.TYPE}
 
@@ -662,7 +659,7 @@ func (p *Parser) parseTypeVariable() Command {
 // parseCopy parses a copy command
 // A copy command takes a string to the clipboard
 //
-// Copy "string"
+//	Copy "string"
 func (p *Parser) parseCopy() Command {
 	cmd := Command{Type: token.COPY}
 
@@ -691,7 +688,7 @@ func (p *Parser) parseCopy() Command {
 // parsePaste parses paste command
 // Paste Command the string from the clipboard buffer.
 //
-// Paste
+//	Paste
 func (p *Parser) parsePaste() Command {
 	cmd := Command{Type: token.PASTE}
 	return cmd
@@ -700,7 +697,7 @@ func (p *Parser) parsePaste() Command {
 // parseEnv parses Env command
 // Env command takes in a key-value pair which is set.
 //
-// Env key "value"
+//	Env key "value"
 func (p *Parser) parseEnv() Command {
 	cmd := Command{Type: token.ENV}
 
@@ -720,7 +717,7 @@ func (p *Parser) parseEnv() Command {
 // parseSource parses source command.
 // Source command takes a tape path to include in current tape.
 //
-// Source <path>
+//	Source <path>
 func (p *Parser) parseSource() Command {
 	cmd := Command{Type: token.SOURCE}
 
@@ -795,7 +792,7 @@ func (p *Parser) parseSource() Command {
 // parseScreenshot parses screenshot command.
 // Screenshot command takes a file path for storing screenshot.
 //
-// Screenshot <path>
+//	Screenshot <path>
 func (p *Parser) parseScreenshot() Command {
 	cmd := Command{Type: token.SCREENSHOT}
 
@@ -833,7 +830,7 @@ func (p *Parser) nextToken() {
 	p.peek = p.l.NextToken()
 }
 
-// Check if a given windowbar type is valid
+// Check if a given windowbar type is valid.
 func isValidWindowBar(w string) bool {
 	return w == "" ||
 		w == "Colorful" || w == "ColorfulRight" ||
