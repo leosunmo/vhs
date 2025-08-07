@@ -962,6 +962,13 @@ func (g *SVGGenerator) generateStyles() string {
 
 	// Generate typing animations for detected patterns
 	for i, pattern := range g.patterns {
+		if pattern.Type == PatternTyping {
+			g.generateTypingCSS(&sb, i, pattern)
+		}
+	}
+
+	// Generate typing animations for detected patterns
+	for i, pattern := range g.patterns {
 		switch pattern.Type {
 		case PatternTyping:
 			g.generateTypingCSS(&sb, i, pattern)
