@@ -77,6 +77,7 @@ const (
 	SHOW                   = "SHOW"
 	SOURCE                 = "SOURCE"
 	TYPE                   = "TYPE"
+	TYPE_VARIABLE          = "TYPE_VARIABLE" //nolint:revive
 	SCREENSHOT             = "SCREENSHOT"
 	COPY                   = "COPY"
 	PASTE                  = "PASTE"
