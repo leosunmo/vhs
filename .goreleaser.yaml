@@ -18,7 +18,7 @@ builds:
     env:
       - CGO_ENABLED=0
     main: "."
-    mod_timestamp: '{{ .CommitTimestamp }}'
+    mod_timestamp: "{{ .CommitTimestamp }}"
     flags:
       - -trimpath
     ldflags:
@@ -60,7 +60,7 @@ archives:
       - manpages/*
 
 checksum:
-  name_template: 'checksums.txt'
+  name_template: "checksums.txt"
   algorithm: sha256
 
 sboms:
@@ -84,13 +84,13 @@ changelog:
       - "Merge pull request"
       - "Merge branch"
   groups:
-    - title: 'New Features'
+    - title: "New Features"
       regexp: '^.*?feat(\([[:word:]]+\))??!?:.+$'
       order: 0
-    - title: 'Bug fixes'
+    - title: "Bug fixes"
       regexp: '^.*?fix(\([[:word:]]+\))??!?:.+$'
       order: 1
-    - title: 'Performance improvements'
+    - title: "Performance improvements"
       regexp: '^.*?perf(\([[:word:]]+\))??!?:.+$'
       order: 2
     - title: Others
@@ -140,29 +140,29 @@ homebrew_casks:
       owner: agentstation
       name: homebrew-tap
       token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
-    
+
     name: vhs
-    
+
     dependencies:
       - formula: ffmpeg
       - formula: ttyd
-    
+
     directory: Casks
-    
+
     commit_author:
       name: "GitHub Actions"
       email: "actions@github.com"
-    
+
     commit_msg_template: "Update vhs to {{ .Tag }}"
-    
+
     homepage: "https://github.com/agentstation/vhs"
-    
+
     description: "A tool for recording terminal GIFs and SVGs"
-    
+
     license: "MIT"
-    
+
     binary: vhs
-    
+
     # Post-install hook for unsigned binaries (macOS)
     hooks:
       post:
@@ -170,13 +170,13 @@ homebrew_casks:
           if system_command("/usr/bin/xattr", args: ["-h"]).exit_status == 0
             system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/vhs"], sudo: false
           end
-    
+
     # Shell completions
     completions:
       bash: completions/vhs.bash
       zsh: completions/vhs.zsh
       fish: completions/vhs.fish
-    
+
     # Custom caveats
     caveats: |
       VHS has been installed! 🎬
@@ -221,7 +221,7 @@ dockers:
       - "--label=org.opencontainers.image.description=A tool for recording terminal GIFs and SVGs"
       - "--label=org.opencontainers.image.licenses=MIT"
       - "--platform=linux/amd64"
-  
+
   - id: vhs-arm64
     ids:
       - vhs

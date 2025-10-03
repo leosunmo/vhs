@@ -103,16 +103,16 @@ type FramePattern struct {
 	EndFrame   int
 	StartTime  float64
 	EndTime    float64
-	
+
 	// For typing patterns
 	Line     int
 	StartCol int
 	Text     string
-	
+
 	// For backspace patterns
 	DeletedText  string // Text that was deleted
 	DeletedCount int    // Number of characters deleted
-	
+
 	// Store the initial and final states
 	InitialState TerminalState
 	FinalState   TerminalState
@@ -328,7 +328,7 @@ func (g *SVGGenerator) Generate() string {
 func (g *SVGGenerator) processFrames() {
 	// First, detect patterns for optimization
 	g.detectPatterns()
-	
+
 	// First pass: collect all unique states and track when they change
 	lastStateIndex := -1
 	lastCursorIdleTime := 0.0
@@ -528,12 +528,12 @@ func (g *SVGGenerator) hashState(state *TerminalState) string {
 // detectPatterns analyzes frames to find typing and other patterns.
 func (g *SVGGenerator) detectPatterns() {
 	g.patterns = []FramePattern{}
-	
+
 	if len(g.options.Frames) < 2 {
 		// Not enough frames to detect patterns
 		return
 	}
-	
+
 	i := 0
 	for i < len(g.options.Frames) {
 		// Try to detect typing pattern
@@ -542,14 +542,14 @@ func (g *SVGGenerator) detectPatterns() {
 			i += consumed
 			continue
 		}
-		
+
 		// Try to detect backspace pattern
 		if pattern, consumed := g.detectBackspacePattern(i); pattern != nil {
 			g.patterns = append(g.patterns, *pattern)
 			i += consumed
 			continue
 		}
-		
+
 		// If no pattern detected, treat as static frame
 		frame := g.options.Frames[i]
 		g.patterns = append(g.patterns, FramePattern{
@@ -568,7 +568,7 @@ func (g *SVGGenerator) detectPatterns() {
 		})
 		i++
 	}
-	
+
 	if g.options.Debug {
 		typingPatterns := 0
 		typingFrames := 0
@@ -602,37 +602,37 @@ func (g *SVGGenerator) detectTypingPattern(start int) (*FramePattern, int) {
 	if start >= len(g.options.Frames)-1 {
 		return nil, 0
 	}
-	
+
 	firstFrame := g.options.Frames[start]
 	line := firstFrame.CursorY
 	startCol := firstFrame.CursorX
-	
+
 	// Track the typing sequence
 	end := start + 1
 	for end < len(g.options.Frames) {
 		prev := g.options.Frames[end-1]
 		curr := g.options.Frames[end]
-		
+
 		// Check if still typing on the same line
 		if curr.CursorY != line {
 			break
 		}
-		
+
 		// Cursor should move forward (or stay for multi-byte chars)
 		if curr.CursorX < prev.CursorX-1 { // Allow small backward movement for corrections
 			break
 		}
-		
+
 		// Check that only the cursor line changed
 		if !g.isOnlyLineChanged(prev, curr, line) {
 			break
 		}
-		
+
 		// Line should grow (characters added)
 		if line < len(prev.Lines) && line < len(curr.Lines) {
 			prevLine := prev.Lines[line]
 			currLine := curr.Lines[line]
-			
+
 			// Check if current line starts with previous line (typing appends)
 			if !strings.HasPrefix(currLine, prevLine) {
 				// If text got shorter, it's likely a backspace - break the pattern
@@ -642,7 +642,7 @@ func (g *SVGGenerator) detectTypingPattern(start int) (*FramePattern, int) {
 				// If text changed but didn't grow from the previous, break
 				break
 			}
-			
+
 			// Check typing speed is reasonable (1-15 chars per frame is typical)
 			charsChanged := abs(len(currLine) - len(prevLine))
 			if charsChanged > 15 {
@@ -651,24 +651,24 @@ func (g *SVGGenerator) detectTypingPattern(start int) (*FramePattern, int) {
 		} else {
 			break
 		}
-		
+
 		end++
 	}
-	
+
 	// Need at least 3 frames to consider it a typing pattern
 	framesInPattern := end - start
 	if framesInPattern < 3 {
 		return nil, 0
 	}
-	
+
 	// Extract the typed text
 	lastFrame := g.options.Frames[end-1]
 	var typedText string
-	
+
 	if line < len(firstFrame.Lines) && line < len(lastFrame.Lines) {
 		startLine := firstFrame.Lines[line]
 		endLine := lastFrame.Lines[line]
-		
+
 		// Find the common prefix (unchanged part)
 		commonPrefix := 0
 		for i := 0; i < len(startLine) && i < len(endLine); i++ {
@@ -677,7 +677,7 @@ func (g *SVGGenerator) detectTypingPattern(start int) (*FramePattern, int) {
 			}
 			commonPrefix = i
 		}
-		
+
 		// The typed text is what was added after the common prefix
 		if len(endLine) > len(startLine) {
 			typedText = endLine[len(startLine):]
@@ -686,12 +686,12 @@ func (g *SVGGenerator) detectTypingPattern(start int) (*FramePattern, int) {
 			typedText = endLine[commonPrefix:]
 		}
 	}
-	
+
 	// Only create pattern if we actually typed something substantial
 	if len(typedText) < 2 {
 		return nil, 0
 	}
-	
+
 	// Create initial and final states
 	initialState := TerminalState{
 		Lines:      firstFrame.Lines,
@@ -700,7 +700,7 @@ func (g *SVGGenerator) detectTypingPattern(start int) (*FramePattern, int) {
 		CursorY:    firstFrame.CursorY,
 		CursorChar: firstFrame.CursorChar,
 	}
-	
+
 	finalState := TerminalState{
 		Lines:      lastFrame.Lines,
 		LineColors: lastFrame.LineColors,
@@ -708,7 +708,7 @@ func (g *SVGGenerator) detectTypingPattern(start int) (*FramePattern, int) {
 		CursorY:    lastFrame.CursorY,
 		CursorChar: lastFrame.CursorChar,
 	}
-	
+
 	pattern := &FramePattern{
 		Type:         PatternTyping,
 		StartFrame:   start,
@@ -721,12 +721,12 @@ func (g *SVGGenerator) detectTypingPattern(start int) (*FramePattern, int) {
 		InitialState: initialState,
 		FinalState:   finalState,
 	}
-	
+
 	if g.options.Debug {
 		log.Printf("Detected typing pattern: frames %d-%d, line %d, text: %q (saved %d frames)",
 			start, end-1, line, typedText, framesInPattern-2)
 	}
-	
+
 	return pattern, framesInPattern
 }
 
@@ -735,48 +735,48 @@ func (g *SVGGenerator) detectBackspacePattern(start int) (*FramePattern, int) {
 	if start >= len(g.options.Frames)-1 {
 		return nil, 0
 	}
-	
+
 	firstFrame := g.options.Frames[start]
 	line := firstFrame.CursorY
-	
+
 	// Track the backspace sequence
 	end := start + 1
 	totalDeleted := 0
-	
+
 	for end < len(g.options.Frames) {
 		prev := g.options.Frames[end-1]
 		curr := g.options.Frames[end]
-		
+
 		// Check if still on the same line
 		if curr.CursorY != line {
 			break
 		}
-		
+
 		// Check that only the cursor line changed
 		if !g.isOnlyLineChanged(prev, curr, line) {
 			break
 		}
-		
+
 		// Check if text is getting shorter (backspace pattern)
 		if line < len(prev.Lines) && line < len(curr.Lines) {
 			prevLine := prev.Lines[line]
 			currLine := curr.Lines[line]
-			
+
 			// For backspace, current line should be shorter
 			if len(currLine) >= len(prevLine) {
 				break
 			}
-			
+
 			// Check if it's a prefix (deleting from end)
 			if !strings.HasPrefix(prevLine, currLine) {
 				// Could be deletion in middle, but for now we'll break
 				break
 			}
-			
+
 			// Track how many characters were deleted
 			deleted := len(prevLine) - len(currLine)
 			totalDeleted += deleted
-			
+
 			// Don't group huge deletions (likely line clear, not backspace)
 			if deleted > 10 {
 				break
@@ -784,34 +784,34 @@ func (g *SVGGenerator) detectBackspacePattern(start int) (*FramePattern, int) {
 		} else {
 			break
 		}
-		
+
 		end++
 	}
-	
+
 	// Need at least 2 frames to consider it a backspace pattern
 	framesInPattern := end - start
 	if framesInPattern < 2 {
 		return nil, 0
 	}
-	
+
 	// Need to have deleted at least 2 characters to be worth optimizing
 	if totalDeleted < 2 {
 		return nil, 0
 	}
-	
+
 	// Extract what was deleted
 	lastFrame := g.options.Frames[end-1]
 	var deletedText string
-	
+
 	if line < len(firstFrame.Lines) && line < len(lastFrame.Lines) {
 		startLine := firstFrame.Lines[line]
 		endLine := lastFrame.Lines[line]
-		
+
 		if strings.HasPrefix(startLine, endLine) {
 			deletedText = startLine[len(endLine):]
 		}
 	}
-	
+
 	// Create states
 	initialState := TerminalState{
 		Lines:      firstFrame.Lines,
@@ -820,7 +820,7 @@ func (g *SVGGenerator) detectBackspacePattern(start int) (*FramePattern, int) {
 		CursorY:    firstFrame.CursorY,
 		CursorChar: firstFrame.CursorChar,
 	}
-	
+
 	finalState := TerminalState{
 		Lines:      lastFrame.Lines,
 		LineColors: lastFrame.LineColors,
@@ -828,7 +828,7 @@ func (g *SVGGenerator) detectBackspacePattern(start int) (*FramePattern, int) {
 		CursorY:    lastFrame.CursorY,
 		CursorChar: lastFrame.CursorChar,
 	}
-	
+
 	pattern := &FramePattern{
 		Type:         PatternBackspace,
 		StartFrame:   start,
@@ -841,12 +841,12 @@ func (g *SVGGenerator) detectBackspacePattern(start int) (*FramePattern, int) {
 		InitialState: initialState,
 		FinalState:   finalState,
 	}
-	
+
 	if g.options.Debug {
 		log.Printf("Detected backspace pattern: frames %d-%d, line %d, deleted: %q (saved %d frames)",
 			start, end-1, line, deletedText, framesInPattern-1)
 	}
-	
+
 	return pattern, framesInPattern
 }
 
@@ -856,13 +856,13 @@ func (g *SVGGenerator) isOnlyLineChanged(prev, curr SVGFrame, targetLine int) bo
 	if abs(len(curr.Lines)-len(prev.Lines)) > 1 {
 		return false
 	}
-	
+
 	// Check each line
 	maxLines := len(prev.Lines)
 	if len(curr.Lines) < maxLines {
 		maxLines = len(curr.Lines)
 	}
-	
+
 	for i := 0; i < maxLines; i++ {
 		if i != targetLine {
 			// Other lines should remain unchanged
@@ -871,7 +871,7 @@ func (g *SVGGenerator) isOnlyLineChanged(prev, curr SVGFrame, targetLine int) bo
 			}
 		}
 	}
-	
+
 	return true
 }
 
@@ -888,7 +888,7 @@ func (g *SVGGenerator) generateTypingCSS(sb *strings.Builder, index int, pattern
 	// Calculate the width of the typed text
 	textWidth := float64(len(pattern.Text)) * g.charWidth
 	duration := pattern.EndTime - pattern.StartTime
-	
+
 	// Generate the keyframe animation
 	fmt.Fprintf(sb, "@keyframes typing_%d {", index)
 	g.writeNewline(sb)
@@ -898,7 +898,7 @@ func (g *SVGGenerator) generateTypingCSS(sb *strings.Builder, index int, pattern
 	g.writeNewline(sb)
 	sb.WriteString("}")
 	g.writeNewline(sb)
-	
+
 	// Generate the class for this typing animation
 	fmt.Fprintf(sb, ".typing_%d {", index)
 	g.writeNewline(sb)
@@ -923,7 +923,7 @@ func (g *SVGGenerator) generateBackspaceCSS(sb *strings.Builder, index int, patt
 	// Calculate the width of the deleted text
 	startWidth := float64(len(pattern.DeletedText)) * g.charWidth
 	duration := pattern.EndTime - pattern.StartTime
-	
+
 	// Generate the keyframe animation (reverse of typing)
 	fmt.Fprintf(sb, "@keyframes backspace_%d {", index)
 	g.writeNewline(sb)
@@ -933,7 +933,7 @@ func (g *SVGGenerator) generateBackspaceCSS(sb *strings.Builder, index int, patt
 	g.writeNewline(sb)
 	sb.WriteString("}")
 	g.writeNewline(sb)
-	
+
 	// Generate the class for this backspace animation
 	fmt.Fprintf(sb, ".backspace_%d {", index)
 	g.writeNewline(sb)
@@ -959,7 +959,7 @@ func (g *SVGGenerator) generateStyles() string {
 
 	sb.WriteString("<style>")
 	g.writeNewline(&sb)
-	
+
 	// Generate typing animations for detected patterns
 	for i, pattern := range g.patterns {
 		switch pattern.Type {
@@ -1553,32 +1553,32 @@ func formatPercentage(val float64, keyframeCount int) string {
 	if val == float64(int(val)) {
 		return fmt.Sprintf("%d", int(val))
 	}
-	
+
 	// Dynamically determine precision based on keyframe count
 	// This ensures we have enough precision to avoid collisions
 	// while keeping the output as compact as possible
 	var precision int
 	switch {
 	case keyframeCount < 100:
-		precision = 1  // Up to 100 unique values
+		precision = 1 // Up to 100 unique values
 	case keyframeCount < 1000:
-		precision = 2  // Up to 1,000 unique values
+		precision = 2 // Up to 1,000 unique values
 	case keyframeCount < 10000:
-		precision = 3  // Up to 10,000 unique values
+		precision = 3 // Up to 10,000 unique values
 	case keyframeCount < 100000:
-		precision = 4  // Up to 100,000 unique values
+		precision = 4 // Up to 100,000 unique values
 	default:
-		precision = 5  // Up to 1,000,000 unique values
+		precision = 5 // Up to 1,000,000 unique values
 	}
-	
+
 	// Format with calculated precision
 	formatStr := fmt.Sprintf("%%.%df", precision)
 	formatted := fmt.Sprintf(formatStr, val)
-	
+
 	// Remove trailing zeros but keep at least 1 decimal for consistency
 	formatted = strings.TrimRight(formatted, "0")
 	formatted = strings.TrimSuffix(formatted, ".")
-	
+
 	return formatted
 }
 
@@ -1766,14 +1766,14 @@ func CaptureSVGFrame(page *rod.Page, counter int, framerate int) (*SVGFrame, err
 		const cursorX = buffer.cursorX;
 		// Cursor Y is relative to the viewport (0 = top of visible area)
 		const cursorY = buffer.cursorY;
-		
+
 		// Debug logging
 		const cursorLine = buffer.getLine(cursorY + buffer.viewportY);
 		if (cursorLine) {
 			const lineText = cursorLine.translateToString(true);
 			console.log('Cursor Debug - xterm.js cursor position:', cursorX, 'on line:', JSON.stringify(lineText));
 			console.log('Cursor Debug - Line length:', lineText.length, 'chars');
-			
+
 			// More detailed debugging
 			if (cursorX < lineText.length) {
 				console.log('Cursor Debug - Character at cursor position (' + cursorX + '):', JSON.stringify(lineText[cursorX]));
@@ -1782,16 +1782,16 @@ func CaptureSVGFrame(page *rod.Page, counter int, framerate int) (*SVGFrame, err
 			} else {
 				console.log('Cursor Debug - Cursor is at end of line (position ' + cursorX + ')');
 			}
-			
+
 			// Check what xterm.js thinks about cursor positioning
 			console.log('Cursor Debug - buffer.cursorX:', buffer.cursorX);
 			console.log('Cursor Debug - Is cursor at line end?', cursorX >= lineText.length);
 		}
-		
+
 		// Get character dimensions
 		let charWidth = 0;
 		let charHeight = 0;
-		
+
 		// Get dimensions from the rendered canvas
 		// This is the most reliable source as it represents the actual rendered output
 		const textCanvas = document.querySelector('canvas.xterm-text-layer');
@@ -1799,10 +1799,10 @@ func CaptureSVGFrame(page *rod.Page, counter int, framerate int) (*SVGFrame, err
 		const rows = term.rows;
 		charWidth = textCanvas.width / cols;
 		charHeight = textCanvas.height / rows;
-		
+
 		// Get cursor character from buffer
 		let cursorChar = '█'; // Default block cursor
-		
+
 		// Helper function to convert xterm.js color to hex
 		function xtermColorToHex(color) {
 			if (!color) return null;
@@ -1820,7 +1820,7 @@ func CaptureSVGFrame(page *rod.Page, counter int, framerate int) (*SVGFrame, err
 				if (color < 16 && palette) {
 					// Basic 16 colors
 					const colorNames = ['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white',
-									   'brightBlack', 'brightRed', 'brightGreen', 'brightYellow', 
+									   'brightBlack', 'brightRed', 'brightGreen', 'brightYellow',
 									   'brightBlue', 'brightMagenta', 'brightCyan', 'brightWhite'];
 					return palette[colorNames[color]] || null;
 				}
@@ -1829,21 +1829,21 @@ func CaptureSVGFrame(page *rod.Page, counter int, framerate int) (*SVGFrame, err
 			}
 			return null;
 		}
-		
+
 		// Get color information for all visible lines
 		const lineColors = [];
 		const activeBuffer = term.buffer.active;
 		console.log('term exists:', !!term, 'buffer exists:', !!term.buffer, 'active exists:', !!activeBuffer);
 		const viewportStart = activeBuffer ? activeBuffer.viewportY : 0;
 		const viewportEnd = viewportStart + term.rows;
-		
+
 		console.log('Capturing colors for viewport:', viewportStart, 'to', viewportEnd, 'buffer length:', activeBuffer ? activeBuffer.length : 'no buffer');
-		
+
 		let cellCount = 0;
 		for (let y = viewportStart; y < viewportEnd && activeBuffer && y < activeBuffer.length; y++) {
 			const line = activeBuffer.getLine(y);
 			const lineColorData = [];
-			
+
 			if (line) {
 				// Get the full line including trailing spaces
 				// translateToString(true) preserves trailing whitespace
@@ -1856,8 +1856,8 @@ func CaptureSVGFrame(page *rod.Page, counter int, framerate int) (*SVGFrame, err
 						const chars = cell.getChars();
 						let fgColor = null;
 						let bgColor = null;
-						
-						
+
+
 						// Check if cell has foreground color
 						if (cell.isFgRGB()) {
 							const fg = cell.getFgColor();
@@ -1869,7 +1869,7 @@ func CaptureSVGFrame(page *rod.Page, counter int, framerate int) (*SVGFrame, err
 							const paletteIndex = cell.getFgColor();
 							if (paletteIndex >= 0 && paletteIndex < 16) {
 								const colorNames = ['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white',
-												   'brightBlack', 'brightRed', 'brightGreen', 'brightYellow', 
+												   'brightBlack', 'brightRed', 'brightGreen', 'brightYellow',
 												   'brightBlue', 'brightMagenta', 'brightCyan', 'brightWhite'];
 								const palette = term.options.theme;
 								if (palette && palette[colorNames[paletteIndex]]) {
@@ -1877,7 +1877,7 @@ func CaptureSVGFrame(page *rod.Page, counter int, framerate int) (*SVGFrame, err
 								}
 							}
 						}
-						
+
 						// Check if cell has background color
 						if (cell.isBgRGB()) {
 							const bg = cell.getBgColor();
@@ -1890,7 +1890,7 @@ func CaptureSVGFrame(page *rod.Page, counter int, framerate int) (*SVGFrame, err
 							const paletteIndex = cell.getBgColor();
 							if (paletteIndex >= 0 && paletteIndex < 16) {
 								const colorNames = ['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white',
-												   'brightBlack', 'brightRed', 'brightGreen', 'brightYellow', 
+												   'brightBlack', 'brightRed', 'brightGreen', 'brightYellow',
 												   'brightBlue', 'brightMagenta', 'brightCyan', 'brightWhite'];
 								const palette = term.options.theme;
 								const colorName = colorNames[paletteIndex];
@@ -1907,8 +1907,8 @@ func CaptureSVGFrame(page *rod.Page, counter int, framerate int) (*SVGFrame, err
 								}
 							}
 						}
-						
-						
+
+
 						lineColorData.push({
 							char: chars || ' ',
 							fgColor: fgColor === null ? '' : fgColor,
@@ -1922,11 +1922,11 @@ func CaptureSVGFrame(page *rod.Page, counter int, framerate int) (*SVGFrame, err
 			}
 			lineColors.push(lineColorData);
 		}
-		
+
 		// Note: We no longer need to calculate character positions since
 		// we're using text-push positioning in SVG
-		
-		
+
+
 		return {
 			cursorX: cursorX,
 			cursorY: cursorY,
@@ -1945,11 +1945,11 @@ func CaptureSVGFrame(page *rod.Page, counter int, framerate int) (*SVGFrame, err
 		const term = window.term;
 		const buffer = term.buffer.active;
 		const lines = [];
-		
+
 		// Get all visible lines
 		const viewportStart = buffer.viewportY;
 		const viewportEnd = viewportStart + term.rows;
-		
+
 		for (let y = viewportStart; y < viewportEnd && y < buffer.length; y++) {
 			const line = buffer.getLine(y);
 			if (line) {
@@ -1959,7 +1959,7 @@ func CaptureSVGFrame(page *rod.Page, counter int, framerate int) (*SVGFrame, err
 				lines.push('');
 			}
 		}
-		
+
 		return lines;
 	}`)
 	if err != nil {
