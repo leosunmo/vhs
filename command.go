@@ -61,8 +61,8 @@ var CommandFuncs = map[parser.CommandType]CommandFunc{
 	token.UP:            ExecuteKey(input.ArrowUp),
 	token.TAB:           ExecuteKey(input.Tab),
 	token.ESCAPE:        ExecuteKey(input.Escape),
-	token.PAGEUP:        ExecuteKey(input.PageUp),
-	token.PAGEDOWN:      ExecuteKey(input.PageDown),
+	token.PAGE_UP:       ExecuteKey(input.PageUp),
+	token.PAGE_DOWN:     ExecuteKey(input.PageDown),
 	token.HIDE:          ExecuteHide,
 	token.REQUIRE:       ExecuteRequire,
 	token.SHOW:          ExecuteShow,
@@ -367,7 +367,7 @@ func ExecuteType(c parser.Command, v *VHS) error {
 	return nil
 }
 
-// ExecuteTypeVariable types the argument string on the running instance of vhs, in a variable typing speed
+// ExecuteTypeVariable types the argument string on the running instance of vhs, in a variable typing speed.
 func ExecuteTypeVariable(c parser.Command, v *VHS) error {
 	typingSpeedVariable := v.Options.TypingSpeedVariable
 	var minTypingSpeed, maxTypingSpeed time.Duration
