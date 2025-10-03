@@ -88,9 +88,10 @@ const (
 	PLAYBACK_SPEED         = "PLAYBACK_SPEED" //nolint:revive
 	HEIGHT                 = "HEIGHT"
 	WIDTH                  = "WIDTH"
-	LETTER_SPACING         = "LETTER_SPACING" //nolint:revive
-	LINE_HEIGHT            = "LINE_HEIGHT"    //nolint:revive
-	TYPING_SPEED           = "TYPING_SPEED"   //nolint:revive
+	LETTER_SPACING         = "LETTER_SPACING"        //nolint:revive
+	LINE_HEIGHT            = "LINE_HEIGHT"           //nolint:revive
+	TYPING_SPEED           = "TYPING_SPEED"          //nolint:revive
+	TYPING_SPEED_VARIABLE  = "TYPING_SPEED_VARIABLE" //nolint:revive
 	PADDING                = "PADDING"
 	THEME                  = "THEME"
 	LOOP_OFFSET            = "LOOP_OFFSET"            //nolint:revive
@@ -156,6 +157,7 @@ var Keywords = map[string]Type{
 	"LineHeight":          LINE_HEIGHT,
 	"PlaybackSpeed":       PLAYBACK_SPEED,
 	"TypingSpeed":         TYPING_SPEED,
+	"TypingSpeedVariable": TYPING_SPEED_VARIABLE,
 	"Padding":             PADDING,
 	"Theme":               THEME,
 	"Width":               WIDTH,
@@ -177,7 +179,7 @@ var Keywords = map[string]Type{
 func IsSetting(t Type) bool {
 	switch t {
 	case SHELL, FONT_FAMILY, FONT_SIZE, LETTER_SPACING, LINE_HEIGHT,
-		FRAMERATE, TYPING_SPEED, THEME, PLAYBACK_SPEED, HEIGHT, WIDTH,
+		FRAMERATE, TYPING_SPEED, TYPING_SPEED_VARIABLE, THEME, PLAYBACK_SPEED, HEIGHT, WIDTH,
 		PADDING, LOOP_OFFSET, MARGIN_FILL, MARGIN, WINDOW_BAR,
 		WINDOW_BAR_SIZE, WINDOW_BAR_TITLE, WINDOW_BAR_FONT_FAMILY, WINDOW_BAR_FONT_SIZE, BORDER_RADIUS, CURSOR_BLINK, WAIT_TIMEOUT, WAIT_PATTERN:
 		return true

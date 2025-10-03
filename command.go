@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"os"
 	"os/exec"
 	"regexp"
@@ -39,35 +40,36 @@ type CommandFunc func(c parser.Command, v *VHS) error
 
 // CommandFuncs maps command types to their executable functions.
 var CommandFuncs = map[parser.CommandType]CommandFunc{
-	token.BACKSPACE:  ExecuteKey(input.Backspace),
-	token.DELETE:     ExecuteKey(input.Delete),
-	token.INSERT:     ExecuteKey(input.Insert),
-	token.DOWN:       ExecuteKey(input.ArrowDown),
-	token.ENTER:      ExecuteKey(input.Enter),
-	token.LEFT:       ExecuteKey(input.ArrowLeft),
-	token.RIGHT:      ExecuteKey(input.ArrowRight),
-	token.SPACE:      ExecuteKey(input.Space),
-	token.UP:         ExecuteKey(input.ArrowUp),
-	token.TAB:        ExecuteKey(input.Tab),
-	token.ESCAPE:     ExecuteKey(input.Escape),
-	token.PAGE_UP:    ExecuteKey(input.PageUp),
-	token.PAGE_DOWN:  ExecuteKey(input.PageDown),
-	token.HIDE:       ExecuteHide,
-	token.REQUIRE:    ExecuteRequire,
-	token.SHOW:       ExecuteShow,
-	token.SET:        ExecuteSet,
-	token.OUTPUT:     ExecuteOutput,
-	token.SLEEP:      ExecuteSleep,
-	token.TYPE:       ExecuteType,
-	token.CTRL:       ExecuteCtrl,
-	token.ALT:        ExecuteAlt,
-	token.SHIFT:      ExecuteShift,
-	token.ILLEGAL:    ExecuteNoop,
-	token.SCREENSHOT: ExecuteScreenshot,
-	token.COPY:       ExecuteCopy,
-	token.PASTE:      ExecutePaste,
-	token.ENV:        ExecuteEnv,
-	token.WAIT:       ExecuteWait,
+	token.BACKSPACE:     ExecuteKey(input.Backspace),
+	token.DELETE:        ExecuteKey(input.Delete),
+	token.INSERT:        ExecuteKey(input.Insert),
+	token.DOWN:          ExecuteKey(input.ArrowDown),
+	token.ENTER:         ExecuteKey(input.Enter),
+	token.LEFT:          ExecuteKey(input.ArrowLeft),
+	token.RIGHT:         ExecuteKey(input.ArrowRight),
+	token.SPACE:         ExecuteKey(input.Space),
+	token.UP:            ExecuteKey(input.ArrowUp),
+	token.TAB:           ExecuteKey(input.Tab),
+	token.ESCAPE:        ExecuteKey(input.Escape),
+	token.PAGE_UP:       ExecuteKey(input.PageUp),
+	token.PAGE_DOWN:     ExecuteKey(input.PageDown),
+	token.HIDE:          ExecuteHide,
+	token.REQUIRE:       ExecuteRequire,
+	token.SHOW:          ExecuteShow,
+	token.SET:           ExecuteSet,
+	token.OUTPUT:        ExecuteOutput,
+	token.SLEEP:         ExecuteSleep,
+	token.TYPE:          ExecuteType,
+	token.TYPE_VARIABLE: ExecuteTypeVariable,
+	token.CTRL:          ExecuteCtrl,
+	token.ALT:           ExecuteAlt,
+	token.SHIFT:         ExecuteShift,
+	token.ILLEGAL:       ExecuteNoop,
+	token.SCREENSHOT:    ExecuteScreenshot,
+	token.COPY:          ExecuteCopy,
+	token.PASTE:         ExecutePaste,
+	token.ENV:           ExecuteEnv,
+	token.WAIT:          ExecuteWait,
 }
 
 // ExecuteNoop is a no-op command that does nothing.
@@ -355,6 +357,47 @@ func ExecuteType(c parser.Command, v *VHS) error {
 	return nil
 }
 
+// ExecuteTypeVariable types the argument string on the running instance of vhs, in a variable typing speed.
+func ExecuteTypeVariable(c parser.Command, v *VHS) error {
+	typingSpeedVariable := v.Options.TypingSpeedVariable
+	var minTypingSpeed, maxTypingSpeed time.Duration
+	if c.Options != "" {
+		var err error
+		minTypingSpeed, err = time.ParseDuration(c.Options)
+		if err != nil {
+			return fmt.Errorf("failed to parse min typing speed: %w", err)
+		}
+		maxTypingSpeed, err = time.ParseDuration(c.Options)
+		if err != nil {
+			return fmt.Errorf("failed to parse max typing speed: %w", err)
+		}
+	} else {
+		minTypingSpeed = typingSpeedVariable.MinTypingSpeed
+		maxTypingSpeed = typingSpeedVariable.MaxTypingSpeed
+	}
+
+	for _, r := range c.Args {
+		k, ok := keymap[r]
+		if ok {
+			err := v.Page.Keyboard.Type(k)
+			if err != nil {
+				return fmt.Errorf("failed to type key %c: %w", r, err)
+			}
+		} else {
+			err := v.Page.MustElement("textarea").Input(string(r))
+			if err != nil {
+				return fmt.Errorf("failed to input text: %w", err)
+			}
+
+			v.Page.MustWaitIdle()
+		}
+		sleepDuration := minTypingSpeed + time.Duration(rand.Int63n(int64(maxTypingSpeed-minTypingSpeed)))
+		time.Sleep(sleepDuration)
+	}
+
+	return nil
+}
+
 // ExecuteOutput applies the output on the vhs videos.
 func ExecuteOutput(c parser.Command, v *VHS) error {
 	switch c.Options {
@@ -422,6 +465,7 @@ var Settings = map[string]CommandFunc{
 	"Padding":             ExecuteSetPadding,
 	"Theme":               ExecuteSetTheme,
 	"TypingSpeed":         ExecuteSetTypingSpeed,
+	"TypingSpeedVariable": ExecuteSetTypingSpeedVariable,
 	"Width":               ExecuteSetWidth,
 	"Shell":               ExecuteSetShell,
 	"LoopOffset":          ExecuteLoopOffset,
@@ -582,6 +626,31 @@ func ExecuteSetTypingSpeed(c parser.Command, v *VHS) error {
 	}
 
 	v.Options.TypingSpeed = typingSpeed
+	return nil
+}
+
+// ExecuteSetTypingSpeedVariable applies the default typing speed variable on the vhs.
+func ExecuteSetTypingSpeedVariable(c parser.Command, v *VHS) error {
+	typingSpeedVariable := strings.Split(c.Args, " ")
+	if len(typingSpeedVariable) != 2 {
+		return fmt.Errorf("failed to parse typing speed variable args, expected 2 values")
+	}
+	minTypingSpeed, err := time.ParseDuration(typingSpeedVariable[0])
+	if err != nil {
+		return fmt.Errorf("failed to parse min typing speed: %w", err)
+	}
+	maxTypingSpeed, err := time.ParseDuration(typingSpeedVariable[1])
+	if err != nil {
+		return fmt.Errorf("failed to parse max typing speed: %w", err)
+	}
+
+	if minTypingSpeed > maxTypingSpeed {
+		return fmt.Errorf("invalid typing speed variable range: min (%s) should be less than or equal to max (%s)", minTypingSpeed, maxTypingSpeed)
+	}
+
+	v.Options.TypingSpeedVariable.MinTypingSpeed = minTypingSpeed
+	v.Options.TypingSpeedVariable.MaxTypingSpeed = maxTypingSpeed
+
 	return nil
 }
 
