@@ -120,6 +120,7 @@ var Keywords = map[string]Type{
 	"Set":                 SET,
 	"Sleep":               SLEEP,
 	"Type":                TYPE,
+	"TypeVariable":        TYPE_VARIABLE,
 	"Enter":               ENTER,
 	"Space":               SPACE,
 	"Backspace":           BACKSPACE,
