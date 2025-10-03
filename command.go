@@ -404,7 +404,7 @@ func ExecuteType(c parser.Command, v *VHS) error {
 	return nil
 }
 
-// ExecuteTypeVariable types the argument string on the running instance of vhs, in a variable typing speed
+// ExecuteTypeVariable types the argument string on the running instance of vhs, in a variable typing speed.
 func ExecuteTypeVariable(c parser.Command, v *VHS) error {
 	typingSpeedVariable := v.Options.TypingSpeedVariable
 	var minTypingSpeed, maxTypingSpeed time.Duration
