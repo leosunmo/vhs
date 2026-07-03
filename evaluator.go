@@ -173,7 +173,7 @@ func Evaluate(ctx context.Context, tape string, out io.Writer, opts ...Evaluator
 		// GIF as the frame sequence will change dimensions. This is fixable.
 		//
 		// We should remove if isSetting statement.
-		isSetting := cmd.Type == token.SET && cmd.Options != "TypingSpeed"
+		isSetting := cmd.Type == token.SET && cmd.Options != "TypingSpeed" && cmd.Options != "PlaybackSpeed"
 
 		if isSetting {
 			fmt.Println(ErrorStyle.Render(fmt.Sprintf("WARN: 'Set %s %s' has been ignored. Move the directive to the top of the file.\nLearn more: https://github.com/agentstation/vhs#settings", cmd.Options, cmd.Args)))

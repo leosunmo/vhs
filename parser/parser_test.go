@@ -470,6 +470,55 @@ func (st *parseScreenshotTest) run(t *testing.T) {
 	}
 }
 
+func TestScrollToBottom(t *testing.T) {
+	tests := []struct {
+		input    string
+		wantOpts string
+		wantArgs string
+	}{
+		{"ScrollToBottom", "", ""},
+		{"ScrollToBottom snap", "", "snap"},
+		{"ScrollToBottom smooth", "", "smooth"},
+		{"ScrollToBottom @500ms smooth", "500ms", "smooth"},
+		{"ScrollToBottom @2s snap", "2s", "snap"},
+		{"ScrollToBottom @1s", "1s", ""},
+	}
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		p := New(l)
+		cmds := p.Parse()
+		if len(cmds) != 1 {
+			t.Fatalf("input %q: expected 1 command, got %d", tt.input, len(cmds))
+		}
+		cmd := cmds[0]
+		if cmd.Type != token.SCROLL_TO_BOTTOM {
+			t.Errorf("input %q: expected SCROLL_TO_BOTTOM, got %s", tt.input, cmd.Type)
+		}
+		if cmd.Options != tt.wantOpts {
+			t.Errorf("input %q: Options: want %q, got %q", tt.input, tt.wantOpts, cmd.Options)
+		}
+		if cmd.Args != tt.wantArgs {
+			t.Errorf("input %q: Args: want %q, got %q", tt.input, tt.wantArgs, cmd.Args)
+		}
+	}
+}
+
+func TestHideScroll(t *testing.T) {
+	input := "Hide+Scroll"
+	l := lexer.New(input)
+	p := New(l)
+	cmds := p.Parse()
+	if len(cmds) != 1 {
+		t.Fatalf("expected 1 command, got %d", len(cmds))
+	}
+	if cmds[0].Type != token.HIDE {
+		t.Errorf("expected HIDE, got %s", cmds[0].Type)
+	}
+	if cmds[0].Args != "Scroll" {
+		t.Errorf("expected Args=Scroll, got %q", cmds[0].Args)
+	}
+}
+
 func TestParseScreeenshot(t *testing.T) {
 	t.Run("should return error when screenshot extension is NOT (.png)", func(t *testing.T) {
 		test := &parseScreenshotTest{

@@ -66,8 +66,9 @@ func (v *VHS) SaveOutput() error {
 
 // Buffer returns the current buffer.
 func (v *VHS) Buffer() ([]string, error) {
-	// Get the current buffer.
-	buf, err := v.Page.Eval("() => Array(term.rows).fill(0).map((e, i) => term.buffer.active.getLine(i).translateToString().trimEnd())")
+	// Get the current buffer. Use baseY so that the correct active-screen rows
+	// are read even when the viewport is locked by Hide+Scroll.
+	buf, err := v.Page.Eval("() => { const b = term.buffer.active; return Array(term.rows).fill(0).map((e, i) => (b.getLine(b.baseY+i)||{translateToString:()=>''}).translateToString().trimEnd()); }")
 	if err != nil {
 		return nil, fmt.Errorf("read buffer: %w", err)
 	}
@@ -83,7 +84,7 @@ func (v *VHS) Buffer() ([]string, error) {
 
 // CurrentLine returns the current line from the buffer.
 func (v *VHS) CurrentLine() (string, error) {
-	buf, err := v.Page.Eval("() => term.buffer.active.getLine(term.buffer.active.cursorY+term.buffer.active.viewportY).translateToString().trimEnd()")
+	buf, err := v.Page.Eval("() => term.buffer.active.getLine(term.buffer.active.cursorY+term.buffer.active.baseY).translateToString().trimEnd()")
 	if err != nil {
 		return "", fmt.Errorf("read current line from buffer: %w", err)
 	}

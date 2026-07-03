@@ -42,23 +42,24 @@ const (
 	EOF     = "EOF"
 	ILLEGAL = "ILLEGAL"
 
-	ALT         = "ALT"
-	BACKSPACE   = "BACKSPACE"
-	CTRL        = "CTRL"
-	DELETE      = "DELETE"
-	END         = "END"
-	ENTER       = "ENTER"
-	ESCAPE      = "ESCAPE"
-	HOME        = "HOME"
-	INSERT      = "INSERT"
-	PAGE_DOWN   = "PAGE_DOWN"   //nolint:revive
-	PAGE_UP     = "PAGE_UP"     //nolint:revive
-	SCROLL_DOWN = "SCROLL_DOWN" //nolint:revive
-	SCROLL_UP   = "SCROLL_UP"   //nolint:revive
-	SLEEP       = "SLEEP"
-	SPACE       = "SPACE"
-	TAB         = "TAB"
-	SHIFT       = "SHIFT"
+	ALT              = "ALT"
+	BACKSPACE        = "BACKSPACE"
+	CTRL             = "CTRL"
+	DELETE           = "DELETE"
+	END              = "END"
+	ENTER            = "ENTER"
+	ESCAPE           = "ESCAPE"
+	HOME             = "HOME"
+	INSERT           = "INSERT"
+	PAGE_DOWN        = "PAGE_DOWN"        //nolint:revive
+	PAGE_UP          = "PAGE_UP"          //nolint:revive
+	SCROLL_DOWN      = "SCROLL_DOWN"      //nolint:revive
+	SCROLL_TO_BOTTOM = "SCROLL_TO_BOTTOM" //nolint:revive
+	SCROLL_UP        = "SCROLL_UP"        //nolint:revive
+	SLEEP            = "SLEEP"
+	SPACE            = "SPACE"
+	TAB              = "TAB"
+	SHIFT            = "SHIFT"
 
 	COMMENT = "COMMENT"
 	NUMBER  = "NUMBER"
@@ -110,6 +111,8 @@ const (
 	WAIT_TIMEOUT           = "WAIT_TIMEOUT"           //nolint:revive
 	WAIT_PATTERN           = "WAIT_PATTERN"           //nolint:revive
 	CURSOR_BLINK           = "CURSOR_BLINK"           //nolint:revive
+	SPEED_CURSOR           = "SPEED_CURSOR"           //nolint:revive
+	SPEED_OVERLAY          = "SPEED_OVERLAY"          //nolint:revive
 )
 
 // Keywords maps keyword strings to tokens.
@@ -177,6 +180,11 @@ var Keywords = map[string]Type{
 	"Copy":                COPY,
 	"Paste":               PASTE,
 	"Env":                 ENV,
+	"ScrollUp":            SCROLL_UP,
+	"ScrollDown":          SCROLL_DOWN,
+	"ScrollToBottom":      SCROLL_TO_BOTTOM,
+	"SpeedCursor":         SPEED_CURSOR,
+	"SpeedOverlay":        SPEED_OVERLAY,
 }
 
 // IsSetting returns whether a token is a setting.
@@ -185,7 +193,8 @@ func IsSetting(t Type) bool {
 	case SHELL, FONT_FAMILY, FONT_SIZE, LETTER_SPACING, LINE_HEIGHT,
 		FRAMERATE, TYPING_SPEED, TYPING_SPEED_VARIABLE, THEME, PLAYBACK_SPEED, HEIGHT, WIDTH,
 		PADDING, LOOP_OFFSET, MARGIN_FILL, MARGIN, WINDOW_BAR,
-		WINDOW_BAR_SIZE, WINDOW_BAR_TITLE, WINDOW_BAR_FONT_FAMILY, WINDOW_BAR_FONT_SIZE, BORDER_RADIUS, CURSOR_BLINK, WAIT_TIMEOUT, WAIT_PATTERN:
+		WINDOW_BAR_SIZE, WINDOW_BAR_TITLE, WINDOW_BAR_FONT_FAMILY, WINDOW_BAR_FONT_SIZE, BORDER_RADIUS, CURSOR_BLINK, WAIT_TIMEOUT, WAIT_PATTERN,
+		SPEED_CURSOR, SPEED_OVERLAY:
 		return true
 	default:
 		return false
@@ -196,7 +205,7 @@ func IsSetting(t Type) bool {
 func IsCommand(t Type) bool {
 	switch t {
 	case TYPE, SLEEP,
-		UP, DOWN, RIGHT, LEFT, PAGE_UP, PAGE_DOWN, SCROLL_UP, SCROLL_DOWN,
+		UP, DOWN, RIGHT, LEFT, PAGE_UP, PAGE_DOWN, SCROLL_UP, SCROLL_DOWN, SCROLL_TO_BOTTOM,
 		ENTER, BACKSPACE, DELETE, TAB,
 		ESCAPE, HOME, INSERT, END, CTRL, SOURCE, SCREENSHOT, COPY, PASTE, WAIT:
 		return true

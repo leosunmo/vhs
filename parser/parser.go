@@ -41,6 +41,7 @@ var CommandTypes = []CommandType{
 	token.PAGE_DOWN,
 	token.SCROLL_UP,
 	token.SCROLL_DOWN,
+	token.SCROLL_TO_BOTTOM,
 	token.RIGHT,
 	token.SET,
 	token.OUTPUT,
@@ -180,6 +181,8 @@ func (p *Parser) parseCommand() []Command {
 		return []Command{p.parseWait()}
 	case token.SOURCE:
 		return p.parseSource()
+	case token.SCROLL_TO_BOTTOM:
+		return []Command{p.parseScrollToBottom()}
 	case token.SCREENSHOT:
 		return []Command{p.parseScreenshot()}
 	case token.COPY:
@@ -549,6 +552,24 @@ func (p *Parser) parseSet() Command {
 				NewError(p.cur, "expected boolean value."),
 			)
 		}
+	case token.SPEED_CURSOR:
+		cmd.Args = p.peek.Literal
+		p.nextToken()
+		if p.cur.Type != token.BOOLEAN {
+			p.errors = append(
+				p.errors,
+				NewError(p.cur, "expected boolean value for SpeedCursor."),
+			)
+		}
+	case token.SPEED_OVERLAY:
+		cmd.Args = p.peek.Literal
+		p.nextToken()
+		if !isValidSpeedOverlay(p.cur.Literal) {
+			p.errors = append(
+				p.errors,
+				NewError(p.cur, p.cur.Literal+" is not a valid overlay position. Valid positions: TopLeft, TopRight, BottomLeft, BottomRight"),
+			)
+		}
 
 	default:
 		cmd.Args = p.peek.Literal
@@ -570,9 +591,30 @@ func (p *Parser) parseSleep() Command {
 
 // parseHide parses a Hide command.
 //
-//	Hide
+//	Hide[+Scroll]
 func (p *Parser) parseHide() Command {
 	cmd := Command{Type: token.HIDE}
+	if p.peek.Type == token.PLUS {
+		p.nextToken()
+		if p.peek.Type == token.STRING && p.peek.Literal == "Scroll" {
+			cmd.Args = "Scroll"
+			p.nextToken()
+		} else {
+			p.errors = append(p.errors, NewError(p.peek, "Hide+ expects Scroll"))
+		}
+	}
+	return cmd
+}
+
+// parseScrollToBottom parses a ScrollToBottom command.
+// Syntax: ScrollToBottom [@<time>] [smooth|snap]
+func (p *Parser) parseScrollToBottom() Command {
+	cmd := Command{Type: token.SCROLL_TO_BOTTOM}
+	cmd.Options = p.parseSpeed()
+	if p.peek.Type == token.STRING && (p.peek.Literal == "smooth" || p.peek.Literal == "snap") {
+		cmd.Args = p.peek.Literal
+		p.nextToken()
+	}
 	return cmd
 }
 
@@ -854,4 +896,9 @@ func isValidWindowBar(w string) bool {
 	return w == "" ||
 		w == "Colorful" || w == "ColorfulRight" ||
 		w == "Rings" || w == "RingsRight"
+}
+
+// isValidSpeedOverlay checks if the value is a valid speed overlay position.
+func isValidSpeedOverlay(s string) bool {
+	return s == "TopLeft" || s == "TopRight" || s == "BottomLeft" || s == "BottomRight"
 }

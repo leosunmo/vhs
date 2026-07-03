@@ -12,6 +12,7 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/go-rod/rod"
@@ -34,6 +35,16 @@ type VHS struct {
 	totalFrames  int
 	close        func() error
 	svgFrames    []SVGFrame
+	// playbackSpeed is the current playback speed, stored atomically so it can
+	// be updated from the evaluator goroutine while Record() reads it.
+	// The float64 value is stored as its IEEE 754 bit pattern in a uint64.
+	playbackSpeedBits uint64
+	frameInfos        []FrameInfo
+}
+
+// FrameInfo records speed at each frame for post-processing overlays.
+type FrameInfo struct {
+	Speed float64
 }
 
 // Options is the set of options for the setup.
@@ -52,6 +63,8 @@ type Options struct {
 	WaitTimeout         time.Duration
 	WaitPattern         *regexp.Regexp
 	CursorBlink         bool
+	SpeedCursor         bool
+	SpeedOverlay        string
 	Screenshot          ScreenshotOptions
 	Style               StyleOptions
 	SVG                 SVGOptions
@@ -140,11 +153,23 @@ func DefaultVHSOptions() Options {
 func New() VHS {
 	mu := &sync.Mutex{}
 	opts := DefaultVHSOptions()
-	return VHS{
+	v := VHS{
 		Options:   &opts,
 		recording: true,
 		mutex:     mu,
 	}
+	atomic.StoreUint64(&v.playbackSpeedBits, math.Float64bits(defaultPlaybackSpeed))
+	return v
+}
+
+// loadPlaybackSpeed returns the current playback speed atomically.
+func (vhs *VHS) loadPlaybackSpeed() float64 {
+	return math.Float64frombits(atomic.LoadUint64(&vhs.playbackSpeedBits))
+}
+
+// storePlaybackSpeed sets the current playback speed atomically.
+func (vhs *VHS) storePlaybackSpeed(speed float64) {
+	atomic.StoreUint64(&vhs.playbackSpeedBits, math.Float64bits(speed))
 }
 
 // Start starts ttyd, browser and everything else needed to create the gif.
@@ -256,6 +281,11 @@ func (vhs *VHS) Cleanup() error {
 
 // Render starts rendering the individual frames into a video.
 func (vhs *VHS) Render() error {
+	// Apply speed overlays before loop offset changes frame numbers.
+	if err := vhs.ApplySpeedOverlays(); err != nil {
+		return err
+	}
+
 	// Apply Loop Offset by modifying frame sequence
 	if err := vhs.ApplyLoopOffset(); err != nil {
 		return err
@@ -289,6 +319,35 @@ func (vhs *VHS) Render() error {
 		return fmt.Errorf("failed to generate SVG: %w", err)
 	}
 
+	return nil
+}
+
+// ApplySpeedOverlays post-processes frame PNGs to draw speed indicators.
+//   - SpeedCursor: draws ">> Nx" text on cursor frames where speed > 1.0,
+//     positioned at the cursor's pixel location (detected by non-transparent pixels).
+//   - SpeedOverlay: draws "Nx" text in the specified corner of text frames
+//     wherever speed != 1.0.
+func (vhs *VHS) ApplySpeedOverlays() error {
+	if !vhs.Options.SpeedCursor && vhs.Options.SpeedOverlay == "" {
+		return nil
+	}
+	for i, info := range vhs.frameInfos {
+		frameNum := i + vhs.Options.Video.StartingFrame
+		cursorSpeedText := formatSpeed(info.Speed)
+		overlaySpeedText := formatSpeedOverlay(info.Speed)
+		if vhs.Options.SpeedCursor && info.Speed > 1.0 {
+			path := filepath.Join(vhs.Options.Video.Input, fmt.Sprintf(cursorFrameFormat, frameNum))
+			if err := applyCursorSpeedOverlay(path, cursorSpeedText); err != nil {
+				return err
+			}
+		}
+		if vhs.Options.SpeedOverlay != "" && info.Speed != 1.0 {
+			path := filepath.Join(vhs.Options.Video.Input, fmt.Sprintf(textFrameFormat, frameNum))
+			if err := applyCornerSpeedOverlay(path, overlaySpeedText, vhs.Options.SpeedOverlay); err != nil {
+				return err
+			}
+		}
+	}
 	return nil
 }
 
@@ -374,6 +433,13 @@ func (vhs *VHS) Record(ctx context.Context) <-chan error {
 	go func() {
 		counter := 0
 		start := time.Now()
+		// accumulator drives per-section variable playback speed.
+		// On each capture tick we add (1 / currentSpeed) to the accumulator.
+		// A frame file is written for every whole unit that accumulates:
+		//   speed > 1  → fewer frames written → section plays faster
+		//   speed < 1  → more frames written  → section plays slower
+		//   speed = 1  → one frame per tick (unchanged behaviour)
+		accumulator := 0.0
 		for {
 			select {
 			case <-ctx.Done():
@@ -404,37 +470,52 @@ func (vhs *VHS) Record(ctx context.Context) <-chan error {
 					continue
 				}
 
-				counter++
-				if err := os.WriteFile(
-					filepath.Join(vhs.Options.Video.Input, fmt.Sprintf(cursorFrameFormat, counter)),
-					cursor,
-					0o600,
-				); err != nil {
-					ch <- fmt.Errorf("error writing cursor frame: %w", err)
-					continue
-				}
-				if err := os.WriteFile(
-					filepath.Join(vhs.Options.Video.Input, fmt.Sprintf(textFrameFormat, counter)),
-					text,
-					0o600,
-				); err != nil {
-					ch <- fmt.Errorf("error writing text frame: %w", err)
-					continue
-				}
+				speed := vhs.loadPlaybackSpeed()
+				accumulator += 1.0 / speed
 
-				// Capture SVG frame data if SVG output is requested
-				if vhs.Options.Video.Output.SVG != "" {
-					svgFrame, err := CaptureSVGFrame(vhs.Page, counter, vhs.Options.Video.Framerate)
-					if err != nil {
-						log.Printf("Error capturing SVG frame %d: %v", counter, err)
-					} else if svgFrame != nil {
-						vhs.svgFrames = append(vhs.svgFrames, *svgFrame)
+				writeErr := false
+				for accumulator >= 1.0 {
+					accumulator -= 1.0
+					counter++
+					vhs.frameInfos = append(vhs.frameInfos, FrameInfo{Speed: speed})
+
+					if err := os.WriteFile(
+						filepath.Join(vhs.Options.Video.Input, fmt.Sprintf(cursorFrameFormat, counter)),
+						cursor,
+						0o600,
+					); err != nil {
+						ch <- fmt.Errorf("error writing cursor frame: %w", err)
+						writeErr = true
+						break
+					}
+					if err := os.WriteFile(
+						filepath.Join(vhs.Options.Video.Input, fmt.Sprintf(textFrameFormat, counter)),
+						text,
+						0o600,
+					); err != nil {
+						ch <- fmt.Errorf("error writing text frame: %w", err)
+						writeErr = true
+						break
+					}
+
+					// Capture SVG frame data if SVG output is requested
+					if vhs.Options.Video.Output.SVG != "" {
+						svgFrame, err := CaptureSVGFrame(vhs.Page, counter, vhs.Options.Video.Framerate)
+						if err != nil {
+							log.Printf("Error capturing SVG frame %d: %v", counter, err)
+						} else if svgFrame != nil {
+							vhs.svgFrames = append(vhs.svgFrames, *svgFrame)
+						}
+					}
+
+					// Capture current frame and disable frame capturing.
+					// Only trigger the screenshot once per capture event.
+					if vhs.Options.Screenshot.frameCapture {
+						vhs.Options.Screenshot.makeScreenshot(counter)
 					}
 				}
-
-				// Capture current frame and disable frame capturing
-				if vhs.Options.Screenshot.frameCapture {
-					vhs.Options.Screenshot.makeScreenshot(counter)
+				if writeErr {
+					continue
 				}
 			}
 		}

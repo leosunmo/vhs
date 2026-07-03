@@ -24,7 +24,7 @@ func NewVideoFilterBuilder(videoOpts *VideoOptions) *FilterComplexBuilder {
 	_, _ = fmt.Fprintf(&filterCode, `
 		[0][1]overlay[merged];
 		[merged]scale=%d:%d:force_original_aspect_ratio=1[scaled];
-		[scaled]fps=%d,setpts=PTS/%f[speed];
+		[scaled]fps=%d[speed];
 		[speed]pad=%d:%d:(ow-iw)/2:(oh-ih)/2:%s[padded];
 		[padded]fillborders=left=%d:right=%d:top=%d:bottom=%d:mode=fixed:color=%s[padded]
 		`,
@@ -32,7 +32,6 @@ func NewVideoFilterBuilder(videoOpts *VideoOptions) *FilterComplexBuilder {
 		termHeight-double(videoOpts.Style.Padding),
 
 		videoOpts.Framerate,
-		videoOpts.PlaybackSpeed,
 
 		termWidth,
 		termHeight,

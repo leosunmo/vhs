@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"image"
 	"image/color"
@@ -8,6 +9,11 @@ import (
 	"image/png"
 	"math"
 	"os"
+	"strconv"
+
+	"golang.org/x/image/font"
+	"golang.org/x/image/font/inconsolata"
+	"golang.org/x/image/math/fixed"
 )
 
 type circle struct {
@@ -114,8 +120,8 @@ func (r *roundedrect) At(x, y int) color.Color {
 		(y < r.pa.Y+r.radius) {
 		c := circle{
 			image.Point{
-				r.radius,
-				r.radius,
+				r.pa.X + r.radius,
+				r.pa.Y + r.radius,
 			},
 			// Add one to corner radius so that
 			// fully-opaque pixels match the rectangle.
@@ -134,7 +140,7 @@ func (r *roundedrect) At(x, y int) color.Color {
 		c := circle{
 			image.Point{
 				r.pb.X - r.radius,
-				r.radius,
+				r.pa.Y + r.radius,
 			},
 			r.radius + 1,
 		}
@@ -148,7 +154,7 @@ func (r *roundedrect) At(x, y int) color.Color {
 		(y < r.pb.Y) {
 		c := circle{
 			image.Point{
-				r.radius,
+				r.pa.X + r.radius,
 				r.pb.Y - r.radius,
 			},
 			r.radius + 1,
@@ -442,4 +448,157 @@ func drawWindowBarTitle(img draw.Image, opts StyleOptions) {
 	textColor := &image.Uniform{color.RGBA{0xCC, 0xCC, 0xCC, 0xFF}}
 	y := getTextYPositionForFont(opts.WindowBarSize, font, int(fontSize))
 	drawCenteredText(img, font, opts.WindowBarTitle, y, textColor)
+}
+
+// formatSpeed formats a playback speed value as a cursor display string, e.g. ">> 2x" or ">> 1.5x".
+func formatSpeed(speed float64) string {
+	s := strconv.FormatFloat(speed, 'f', -1, 64)
+	return ">> " + s + "x"
+}
+
+// formatSpeedOverlay formats a playback speed value for corner overlays, e.g. "2x" or "1.5x".
+func formatSpeedOverlay(speed float64) string {
+	return strconv.FormatFloat(speed, 'f', -1, 64) + "x"
+}
+
+const (
+	speedBadgePaddingX = 8
+	speedBadgePaddingY = 4
+	speedBadgeBorder   = 2
+)
+
+func speedTextWidth(text string) int {
+	return font.MeasureString(inconsolata.Bold8x16, text).Ceil()
+}
+
+func speedTextBadgeRect(x, y int, text string) image.Rectangle {
+	return image.Rect(
+		x-speedBadgePaddingX,
+		y-inconsolata.Bold8x16.Ascent-speedBadgePaddingY,
+		x+speedTextWidth(text)+speedBadgePaddingX,
+		y+inconsolata.Bold8x16.Descent+speedBadgePaddingY,
+	)
+}
+
+// drawSpeedText renders text onto img at (x, y) using the Inconsolata Bold 8×16 font.
+// y is the baseline position. The text is drawn in white inside a solid rounded
+// badge with a white border for legibility against any background.
+func drawSpeedText(img *image.RGBA, x, y int, text string) {
+	badge := speedTextBadgeRect(x, y, text)
+	radius := badge.Dy() / 2
+
+	// Outer border: solid white rounded rect.
+	draw.DrawMask(
+		img, badge, image.NewUniform(color.RGBA{0xFF, 0xFF, 0xFF, 0xFF}), image.Point{},
+		&roundedrect{pa: badge.Min, pb: badge.Max, radius: radius},
+		image.Point{}, draw.Over,
+	)
+
+	// Inner background: solid dark rounded rect inset by border width.
+	inner := badge.Inset(speedBadgeBorder)
+	innerRadius := radius - speedBadgeBorder
+	if innerRadius < 0 {
+		innerRadius = 0
+	}
+	draw.DrawMask(
+		img, inner, image.NewUniform(color.RGBA{0x12, 0x16, 0x1D, 0xFF}), image.Point{},
+		&roundedrect{pa: inner.Min, pb: inner.Max, radius: innerRadius},
+		image.Point{}, draw.Over,
+	)
+
+	d := &font.Drawer{
+		Dst:  img,
+		Src:  image.NewUniform(color.RGBA{0xFF, 0xFF, 0xFF, 0xFF}),
+		Face: inconsolata.Bold8x16,
+		Dot:  fixed.Point26_6{X: fixed.Int26_6(x * 64), Y: fixed.Int26_6(y * 64)},
+	}
+	d.DrawString(text)
+}
+
+// applyCursorSpeedOverlay loads the cursor PNG at path, detects the cursor position
+// by finding non-transparent pixels, draws speedText at that position, and saves.
+func applyCursorSpeedOverlay(path, speedText string) error {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("reading cursor frame: %w", err)
+	}
+	src, err := png.Decode(bytes.NewReader(data))
+	if err != nil {
+		return fmt.Errorf("decoding cursor frame: %w", err)
+	}
+	rgba := image.NewRGBA(src.Bounds())
+	draw.Draw(rgba, rgba.Bounds(), src, image.Point{}, draw.Src)
+
+	// Find cursor position (topmost non-transparent pixel)
+	cx, cy := findCursorPixel(src)
+
+	// Draw speed text at cursor position (baseline at cy + font ascent)
+	drawSpeedText(rgba, cx, cy+inconsolata.Bold8x16.Ascent, speedText)
+
+	return savePNG(path, rgba)
+}
+
+// applyCornerSpeedOverlay loads the text PNG at path and draws speedText in the
+// specified corner (TopLeft, TopRight, BottomLeft, BottomRight), then saves.
+func applyCornerSpeedOverlay(path, speedText, corner string) error {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("reading text frame: %w", err)
+	}
+	src, err := png.Decode(bytes.NewReader(data))
+	if err != nil {
+		return fmt.Errorf("decoding text frame: %w", err)
+	}
+	rgba := image.NewRGBA(src.Bounds())
+	draw.Draw(rgba, rgba.Bounds(), src, image.Point{}, draw.Src)
+
+	const margin = 12
+	textPixelW := speedTextWidth(speedText)
+	bounds := rgba.Bounds()
+
+	var x, y int
+	switch corner {
+	case "TopLeft":
+		x = margin + speedBadgePaddingX
+		y = margin + inconsolata.Bold8x16.Ascent + speedBadgePaddingY
+	case "TopRight":
+		x = bounds.Max.X - margin - textPixelW - speedBadgePaddingX
+		y = margin + inconsolata.Bold8x16.Ascent + speedBadgePaddingY
+	case "BottomLeft":
+		x = margin + speedBadgePaddingX
+		y = bounds.Max.Y - margin - inconsolata.Bold8x16.Descent - speedBadgePaddingY
+	case "BottomRight":
+		x = bounds.Max.X - margin - textPixelW - speedBadgePaddingX
+		y = bounds.Max.Y - margin - inconsolata.Bold8x16.Descent - speedBadgePaddingY
+	default:
+		x = margin + speedBadgePaddingX
+		y = margin + inconsolata.Bold8x16.Ascent + speedBadgePaddingY
+	}
+
+	drawSpeedText(rgba, x, y, speedText)
+	return savePNG(path, rgba)
+}
+
+// findCursorPixel returns the (x, y) of the topmost-leftmost non-transparent pixel
+// in img, which represents the cursor position.
+func findCursorPixel(img image.Image) (int, int) {
+	bounds := img.Bounds()
+	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+		for x := bounds.Min.X; x < bounds.Max.X; x++ {
+			_, _, _, a := img.At(x, y).RGBA()
+			if a > 0x8000 {
+				return x, y
+			}
+		}
+	}
+	return 0, 0
+}
+
+// savePNG encodes img as PNG and writes it to path.
+func savePNG(path string, img image.Image) error {
+	var buf bytes.Buffer
+	if err := png.Encode(&buf, img); err != nil {
+		return fmt.Errorf("encoding PNG: %w", err)
+	}
+	return os.WriteFile(path, buf.Bytes(), 0o600)
 }
