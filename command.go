@@ -63,6 +63,7 @@ var CommandFuncs = map[parser.CommandType]CommandFunc{
 	token.OUTPUT:           ExecuteOutput,
 	token.SLEEP:            ExecuteSleep,
 	token.TYPE:             ExecuteType,
+	token.TYPE_VARIABLE:    ExecuteTypeVariable,
 	token.CTRL:             ExecuteCtrl,
 	token.ALT:              ExecuteAlt,
 	token.SHIFT:            ExecuteShift,
