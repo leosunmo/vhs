@@ -5,7 +5,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/agentstation/vhs/parser"
+	"github.com/leosunmo/vhs/parser"
 )
 
 // InvalidSyntaxError is returned when the parser encounters one or more errors.

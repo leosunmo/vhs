@@ -78,7 +78,7 @@ The following is a list of all possible setting commands in VHS:
 * Set %WaitTimeout% <time>
 * Set %WaitPattern% <regexp>
 `
-	manBugs = "See GitHub Issues: <https://github.com/agentstation/vhs/issues>"
+	manBugs = "See GitHub Issues: <https://github.com/leosunmo/vhs/issues>"
 
 	manAuthor = "Charm <vt100@charm.sh>"
 )

@@ -1,4 +1,4 @@
-module github.com/agentstation/vhs
+module github.com/leosunmo/vhs
 
 go 1.25.8
 

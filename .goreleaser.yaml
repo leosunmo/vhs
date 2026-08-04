@@ -131,7 +131,7 @@ release:
 
     #### Using Go
     ```bash
-    go install github.com/agentstation/vhs@{{ .Tag }}
+    go install github.com/leosunmo/vhs@{{ .Tag }}
     ```
 
 # Homebrew cask configuration
@@ -155,7 +155,7 @@ homebrew_casks:
 
     commit_msg_template: "Update vhs to {{ .Tag }}"
 
-    homepage: "https://github.com/agentstation/vhs"
+    homepage: "https://github.com/leosunmo/vhs"
 
     description: "A tool for recording terminal GIFs and SVGs"
 
@@ -196,7 +196,7 @@ homebrew_casks:
         Zsh:  #{HOMEBREW_PREFIX}/share/zsh/site-functions
         Fish: #{HOMEBREW_PREFIX}/share/fish/vendor_completions.d
 
-      Documentation: https://github.com/agentstation/vhs
+      Documentation: https://github.com/leosunmo/vhs
 
 # Docker configuration - optimized with caching
 dockers:
@@ -217,7 +217,7 @@ dockers:
       - "--label=org.opencontainers.image.title={{.ProjectName}}"
       - "--label=org.opencontainers.image.revision={{.FullCommit}}"
       - "--label=org.opencontainers.image.version={{.Version}}"
-      - "--label=org.opencontainers.image.source=https://github.com/agentstation/vhs"
+      - "--label=org.opencontainers.image.source=https://github.com/leosunmo/vhs"
       - "--label=org.opencontainers.image.description=A tool for recording terminal GIFs and SVGs"
       - "--label=org.opencontainers.image.licenses=MIT"
       - "--platform=linux/amd64"
@@ -239,7 +239,7 @@ dockers:
       - "--label=org.opencontainers.image.title={{.ProjectName}}"
       - "--label=org.opencontainers.image.revision={{.FullCommit}}"
       - "--label=org.opencontainers.image.version={{.Version}}"
-      - "--label=org.opencontainers.image.source=https://github.com/agentstation/vhs"
+      - "--label=org.opencontainers.image.source=https://github.com/leosunmo/vhs"
       - "--label=org.opencontainers.image.description=A tool for recording terminal GIFs and SVGs"
       - "--label=org.opencontainers.image.licenses=MIT"
       - "--platform=linux/arm64"

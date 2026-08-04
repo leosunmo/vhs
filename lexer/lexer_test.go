@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/agentstation/vhs/token"
+	"github.com/leosunmo/vhs/token"
 )
 
 func TestNextToken(t *testing.T) {

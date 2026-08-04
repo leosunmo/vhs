@@ -17,9 +17,9 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/agentstation/vhs/lexer"
-	"github.com/agentstation/vhs/parser"
 	version "github.com/hashicorp/go-version"
+	"github.com/leosunmo/vhs/lexer"
+	"github.com/leosunmo/vhs/parser"
 	"github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
 )

@@ -5,8 +5,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/agentstation/vhs/parser"
-	"github.com/agentstation/vhs/token"
+	"github.com/leosunmo/vhs/parser"
+	"github.com/leosunmo/vhs/token"
 	"github.com/mattn/go-runewidth"
 )
 

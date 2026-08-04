@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/agentstation/vhs/token"
 	"github.com/creack/pty"
+	"github.com/leosunmo/vhs/token"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 )

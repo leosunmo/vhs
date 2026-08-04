@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/agentstation/vhs/lexer"
-	"github.com/agentstation/vhs/token"
+	"github.com/leosunmo/vhs/lexer"
+	"github.com/leosunmo/vhs/token"
 )
 
 func TestParser(t *testing.T) {

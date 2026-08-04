@@ -11,10 +11,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/agentstation/vhs/parser"
-	"github.com/agentstation/vhs/token"
 	"github.com/atotto/clipboard"
 	"github.com/go-rod/rod/lib/input"
+	"github.com/leosunmo/vhs/parser"
+	"github.com/leosunmo/vhs/token"
 )
 
 // Execute executes a command on a running instance of vhs.

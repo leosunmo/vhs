@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/agentstation/vhs/lexer"
-	"github.com/agentstation/vhs/token"
+	"github.com/leosunmo/vhs/lexer"
+	"github.com/leosunmo/vhs/token"
 )
 
 // NewError returns a new parser.Error with the given token and message.

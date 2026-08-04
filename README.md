@@ -4,9 +4,9 @@
   <img src="https://user-images.githubusercontent.com/42545625/198402537-12ca2f6c-0779-4eb8-a67c-8db9cb3df13c.png#gh-dark-mode-only" width="500" />
   <img src="https://user-images.githubusercontent.com/42545625/198402542-a305f669-a05a-4d91-b18b-ca76e72b655a.png#gh-light-mode-only" width="500" />
   <br>
-  <a href="https://github.com/agentstation/vhs/releases"><img src="https://img.shields.io/github/release/agentstation/vhs.svg" alt="Latest Release"></a>
-  <a href="https://pkg.go.dev/github.com/agentstation/vhs?tab=doc"><img src="https://godoc.org/github.com/golang/gddo?status.svg" alt="Go Docs"></a>
-  <a href="https://github.com/agentstation/vhs/actions"><img src="https://github.com/agentstation/vhs/workflows/build/badge.svg" alt="Build Status"></a>
+  <a href="https://github.com/leosunmo/vhs/releases"><img src="https://img.shields.io/github/release/agentstation/vhs.svg" alt="Latest Release"></a>
+  <a href="https://pkg.go.dev/github.com/leosunmo/vhs?tab=doc"><img src="https://godoc.org/github.com/golang/gddo?status.svg" alt="Go Docs"></a>
+  <a href="https://github.com/leosunmo/vhs/actions"><img src="https://github.com/leosunmo/vhs/workflows/build/badge.svg" alt="Build Status"></a>
 </p>
 
 > **Note**: This is a fork of the original [charmbracelet/vhs](https://github.com/charmbracelet/vhs) that adds native SVG output support and additional features. Features specific to this fork are marked with 🚀.
@@ -118,7 +118,7 @@ the `Output`) in the directory.
   <img width="600" alt="A GIF produced by the VHS code above" src="https://stuff.charm.sh/vhs/examples/demo.gif">
 </picture>
 
-For more examples see the [`examples/`](https://github.com/agentstation/vhs/tree/main/examples) directory.
+For more examples see the [`examples/`](https://github.com/leosunmo/vhs/tree/main/examples) directory.
 
 ## Installation
 
@@ -163,7 +163,7 @@ Or, just install it with `go`:
 
 ```sh
 # 🚀 Install this fork with SVG support
-go install github.com/agentstation/vhs@latest
+go install github.com/leosunmo/vhs@latest
 
 # Original VHS
 go install github.com/charmbracelet/vhs@latest
@@ -212,7 +212,7 @@ scoop install vhs
 
 </details>
 
-[releases]: https://github.com/agentstation/vhs/releases
+[releases]: https://github.com/leosunmo/vhs/releases
 
 ## Record Tapes
 
@@ -981,7 +981,7 @@ vhs demo.tape --debug-console
 You can hook up VHS to your CI pipeline to keep your GIFs up-to-date with
 the official VHS GitHub Action:
 
-> [⚙️ charmbracelet/vhs-action](https://github.com/agentstation/vhs-action)
+> [⚙️ charmbracelet/vhs-action](https://github.com/leosunmo/vhs-action)
 
 VHS can also be used for integration testing. Use the `.txt` or `.ascii` output
 to generate golden files. Store these files in a git repository to ensure there
@@ -1004,7 +1004,7 @@ It works great with Neovim, Emacs, and so on!
 
 See [contributing][contribute].
 
-[contribute]: https://github.com/agentstation/vhs/contribute
+[contribute]: https://github.com/leosunmo/vhs/contribute
 
 ## Feedback
 
@@ -1016,7 +1016,7 @@ We’d love to hear your thoughts on this project. Feel free to drop us a note!
 
 ## License
 
-[MIT](https://github.com/agentstation/vhs/raw/main/LICENSE)
+[MIT](https://github.com/leosunmo/vhs/raw/main/LICENSE)
 
 ---
 

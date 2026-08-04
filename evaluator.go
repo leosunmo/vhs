@@ -7,10 +7,10 @@ import (
 	"log"
 	"os"
 
-	"github.com/agentstation/vhs/lexer"
-	"github.com/agentstation/vhs/parser"
-	"github.com/agentstation/vhs/token"
 	"github.com/go-rod/rod"
+	"github.com/leosunmo/vhs/lexer"
+	"github.com/leosunmo/vhs/parser"
+	"github.com/leosunmo/vhs/token"
 )
 
 // EvaluatorOption is a function that can be used to modify the VHS instance.
@@ -176,7 +176,7 @@ func Evaluate(ctx context.Context, tape string, out io.Writer, opts ...Evaluator
 		isSetting := cmd.Type == token.SET && cmd.Options != "TypingSpeed" && cmd.Options != "PlaybackSpeed"
 
 		if isSetting {
-			fmt.Println(ErrorStyle.Render(fmt.Sprintf("WARN: 'Set %s %s' has been ignored. Move the directive to the top of the file.\nLearn more: https://github.com/agentstation/vhs#settings", cmd.Options, cmd.Args)))
+			fmt.Println(ErrorStyle.Render(fmt.Sprintf("WARN: 'Set %s %s' has been ignored. Move the directive to the top of the file.\nLearn more: https://github.com/leosunmo/vhs#settings", cmd.Options, cmd.Args)))
 		}
 		if isSetting || cmd.Type == token.REQUIRE {
 			_, _ = fmt.Fprintln(out, Highlight(cmd, true))
